@@ -1,20 +1,52 @@
+import datetime
 import json
 
 import requests
-"https://iss.moex.com/iss/engines/stock/markets/shares/securities/AFLT.json"
+
+from sql_service import get_stocks_from_db
+
+URL = 'https://api-invest.tinkoff.ru/openapi/portfolio'
 
 
-def add_new_stock(message, buyer_id):
-    stock_data = check_stock(message[1])
-    if stock_data is None:
-        return None
+def get_stocks_from_bank(token):
+    raw_data = get_raw_data(token)
+    return get_clean_data(raw_data.text)
 
 
-def check_stock(name):
-    result = {}
-    response = requests.get(f"https://iss.moex.com/iss/engines/stock/markets/shares/securities/{name}.json")
-    stock_data = json.loads(response.text)
-    if not stock_data['marketdata']['data']:
-        return None
-    name = stock_data['securities']['data'][0][2]
-    return name
+
+def get_raw_data(token):
+    headers = {"Authorization": f'Bearer {token}'}
+    response = requests.get(URL, headers=headers)
+    return response
+
+
+def get_clean_data(raw_data):
+    result = []
+    json_data = json.loads(raw_data)
+    for item in json_data['payload']['positions']:
+        result.append(prepare_item(item))
+
+    return result
+
+
+def prepare_item(item):
+    return dict(
+        price=get_current_price(item),
+        total=item['balance'],
+        name=item['ticker'],
+        old_price=item['averagePositionPrice']['value'],
+        date=datetime.datetime.utcnow()
+    )
+
+
+def get_current_price(item):
+    return (item['averagePositionPrice']['value']*item['balance'] + item['expectedYield']['value'])/item['balance']
+
+
+def sync_with_db(stocks, user_id):
+    local_stocks = get_stocks_from_db(user_id)
+    compare_stocks(stocks, local_stocks)
+
+
+def compare_stocks(stocks, local_stocks):
+    pass
