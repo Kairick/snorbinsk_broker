@@ -1,15 +1,8 @@
-from unittest import TestCase
-
-from service import check_stock, get_stock_data, prepare_stock_data
+from service import get_stock
 
 
-def test_check_stock():
-    assert check_stock('fsavfdtsfdgvsd') is None
-    assert check_stock('sber')['securities']['data'][0][2] == "Сбербанк"
-    assert check_stock('aflt')['securities']['data'][0][2] == "Аэрофлот"
-
-
-def test_prepare_stock_data():
-    result = prepare_stock_data(get_stock_data('aflt'))
-    assert result[0] == 'Аэрофлот'
-    assert isinstance(result[1], float)
+def test_get_stock(get_stock_fake):
+    result = get_stock('ROSN', get_stock_fake)
+    assert result['total'] == 40.0
+    assert result['price'] == 531.7375
+    assert result['name'] == "ROSN"

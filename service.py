@@ -3,7 +3,7 @@ import json
 
 import requests
 
-from sql_service import get_stocks_from_db
+from sql_service import get_stocks_from_db, save_changes_to_db, add_to_db, del_from_db
 
 URL = 'https://api-invest.tinkoff.ru/openapi/portfolio'
 
@@ -43,10 +43,54 @@ def get_current_price(item):
     return (item['averagePositionPrice']['value']*item['balance'] + item['expectedYield']['value'])/item['balance']
 
 
-def sync_with_db(stocks, user_id):
-    local_stocks = get_stocks_from_db(user_id)
-    compare_stocks(stocks, local_stocks)
+def sync_with_db(stocks, user):
+    local_stocks = get_stocks_from_db(user['id'])
+    compare_stocks(stocks, local_stocks, user)
 
 
-def compare_stocks(stocks, local_stocks):
+def compare_stocks(stocks, local_stocks, user):
+    stocks_names = set([stock.get('name') for stock in stocks])
+    local_stocks_names = set([local_stock.get('name') for local_stock in local_stocks])
+    update_stocks(set.intersection(stocks_names, local_stocks_names), stocks, local_stocks, user)
+    add_stocks(set.difference(stocks_names, local_stocks_names), stocks, user)
+    del_stocks(set.difference(local_stocks_names, stocks_names), user)
+
+
+def add_stocks(names, stocks, user):
+    for name in names:
+        add_to_db(stocks, name, user[id])
+
+
+def del_stocks(names, user):
+    for name in names:
+        del_from_db(name, user)
+
+
+def ready_to_sell(user, cur_local_stock):
+    p = cur_local_stock['price']
+    ev = cur_local_stock['new_price']
+    x = user['wealth_ratio']
+    d = (datetime.datetime.now() - cur_local_stock['date']).days/365
+    f = p + 0.03*p + d*x*p + 0.03*ev + 0.13*(ev-p)
+    return True if ev > f else False
+
+
+def sent_message(param, param1, param2):
     pass
+
+
+def update_stocks(names, stocks, local_stocks, user):
+    for name in names:
+        cur_stock = get_stock(name, stocks)
+        cur_local_stock = get_stock(name, local_stocks)
+        if cur_stock['total'] != cur_local_stock['total']:
+            cur_local_stock['total'] = cur_stock['total']
+            cur_local_stock['price'] = (cur_stock['price'] + cur_local_stock['price'])/2
+            save_changes_to_db(cur_local_stock)
+        cur_local_stock['new_price'] = cur_stock['price']
+        if ready_to_sell(user, cur_local_stock):
+            sent_message(user['telegram_id'], cur_local_stock['name'], cur_local_stock['new_price'])
+
+
+def get_stock(name, stocks):
+    return [stock for stock in stocks if stock['name'] == name][0]
