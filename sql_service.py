@@ -21,7 +21,7 @@ def init_tables():
     cursor.execute("CREATE TABLE buyer(id integer not null PRIMARY KEY, name text, "
                    "wealth_ratio integer, telegram_id text, token text)")
     cursor.execute("CREATE TABLE stock_price(id integer not null PRIMARY KEY, name text,"
-                   "date datetime default , price real, total integer,"
+                   "date datetime default current_date , price real, total integer,"
                    "buyer_id integer not null,"
                    "FOREIGN KEY (buyer_id) REFERENCES buyer(id))")
 
