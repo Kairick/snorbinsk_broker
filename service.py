@@ -82,8 +82,9 @@ def update_stocks(names, stocks, local_stocks, user):
         cur_stock = get_stock(name, stocks)
         cur_local_stock = get_stock(name, local_stocks)
         if cur_stock['total'] != cur_local_stock['total']:
+            if cur_local_stock['total'] < cur_stock['total']:
+                cur_local_stock['price'] = (cur_stock['price'] + cur_local_stock['price']) / 2
             cur_local_stock['total'] = cur_stock['total']
-            cur_local_stock['price'] = (cur_stock['price'] + cur_local_stock['price'])/2
             save_changes_to_db(cur_local_stock)
         cur_local_stock['new_price'] = cur_stock['price']
         if ready_to_sell(user, cur_local_stock):
