@@ -4,12 +4,7 @@ from decouple import config
 bot = telebot.TeleBot(config('BOT_API'))
 
 
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    send_message('hi, man!')
+def send_message(user_id, stock_name, stock_price):
+    message = f'Пора продавать акцию {stock_name}. Цена акции - {stock_price}'
+    bot.send_message(user_id, message)
 
-
-def send_message(message):
-    bot.send_message(98344348, message)
-
-bot.polling()

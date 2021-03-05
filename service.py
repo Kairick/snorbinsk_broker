@@ -3,6 +3,7 @@ import json
 
 import requests
 
+from brocker import send_message
 from sql_service import get_stocks_from_db, save_changes_to_db, add_to_db, del_from_db
 
 URL = 'https://api-invest.tinkoff.ru/openapi/portfolio'
@@ -11,7 +12,6 @@ URL = 'https://api-invest.tinkoff.ru/openapi/portfolio'
 def get_stocks_from_bank(token):
     raw_data = get_raw_data(token)
     return get_clean_data(raw_data.text)
-
 
 
 def get_raw_data(token):
@@ -35,7 +35,7 @@ def prepare_item(item):
         total=item['balance'],
         name=item['ticker'],
         old_price=item['averagePositionPrice']['value'],
-        date=datetime.datetime.utcnow()
+        date=datetime.datetime.now()
     )
 
 
@@ -58,25 +58,23 @@ def compare_stocks(stocks, local_stocks, user):
 
 def add_stocks(names, stocks, user):
     for name in names:
-        add_to_db(stocks, name, user[id])
+        add_to_db(get_stock(name, stocks), name, user['id'])
 
 
 def del_stocks(names, user):
     for name in names:
-        del_from_db(name, user)
+        del_from_db(name, user['id'])
 
 
 def ready_to_sell(user, cur_local_stock):
     p = cur_local_stock['price']
     ev = cur_local_stock['new_price']
+    period = (datetime.datetime.now() - datetime.datetime.fromisoformat(cur_local_stock['date'])).days
+    days = period if period else 1
     x = user['wealth_ratio']
-    d = (datetime.datetime.now() - cur_local_stock['date']).days/365
+    d = days/365
     f = p + 0.03*p + d*x*p + 0.03*ev + 0.13*(ev-p)
     return True if ev > f else False
-
-
-def sent_message(param, param1, param2):
-    pass
 
 
 def update_stocks(names, stocks, local_stocks, user):
@@ -89,7 +87,7 @@ def update_stocks(names, stocks, local_stocks, user):
             save_changes_to_db(cur_local_stock)
         cur_local_stock['new_price'] = cur_stock['price']
         if ready_to_sell(user, cur_local_stock):
-            sent_message(user['telegram_id'], cur_local_stock['name'], cur_local_stock['new_price'])
+            send_message(user['telegram_id'], cur_local_stock['name'], cur_local_stock['new_price'])
 
 
 def get_stock(name, stocks):

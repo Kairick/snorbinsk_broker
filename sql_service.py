@@ -9,6 +9,7 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
+
 def connect_db():
     con = sqlite3.connect(config('DATABASE'))
     return con
@@ -57,7 +58,7 @@ def save_changes_to_db(item):
     cursor = con.cursor()
     query = "update stock_price set price = '{0}', " \
             "total = '{1}', date = '{2}'" \
-            " where name = '{3}'".format(item['price'], item['total'], datetime.datetime.utcnow(), item['name'])
+            " where name = '{3}'".format(item['price'], item['total'], datetime.datetime.now(), item['name'])
 
     cursor.execute(query)
     con.commit()
@@ -67,8 +68,8 @@ def save_changes_to_db(item):
 def add_to_db(stocks, name, user_id):
     con = connect_db()
     cursor = con.cursor()
-    query = f"insert into stock_price (name, price, total, buyer_id)" \
-            f"values ({name}, {stocks['price']}, {int(stocks['total'])}, {user_id})"
+    query = "insert into stock_price (name, price, total, buyer_id)" \
+            " values ('{0}', '{1}', '{2}', '{3}')".format(name, stocks['old_price'], int(stocks['total']), user_id)
     cursor.execute(query)
     con.commit()
     con.close()
@@ -77,7 +78,7 @@ def add_to_db(stocks, name, user_id):
 def del_from_db(name, user_id):
     con = connect_db()
     cursor = con.cursor()
-    query = f"delete from stock_price where name = '{name}' buyer_id = '{user_id}'"
+    query = "delete from stock_price where name = '{0}' and buyer_id = '{1}'".format(name, user_id)
     cursor.execute(query)
     con.commit()
     con.close()

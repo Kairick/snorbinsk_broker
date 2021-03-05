@@ -1,4 +1,4 @@
-from service import get_stock
+from service import get_stock, send_message
 
 
 def test_get_stock(get_stock_fake):
