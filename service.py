@@ -69,11 +69,8 @@ def del_stocks(names, user):
 def ready_to_sell(user, cur_local_stock):
     p = cur_local_stock['price']
     ev = cur_local_stock['new_price']
-    period = (datetime.datetime.now() - datetime.datetime.fromisoformat(cur_local_stock['date'])).days
-    days = period if period else 1
     x = user['wealth_ratio']
-    d = days/365
-    f = p + 0.03*p + d*x*p + 0.03*ev + 0.13*(ev-p)
+    f = (x/100*1.003*p + 0.87261*p)/0.86739
     return True if ev > f else False
 
 
