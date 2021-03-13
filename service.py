@@ -70,7 +70,12 @@ def ready_to_sell(user, cur_local_stock):
     p = cur_local_stock['price']
     ev = cur_local_stock['new_price']
     x = user['wealth_ratio']
-    f = (x/100*1.003*p + 0.87261*p)/0.86739
+    period = (datetime.datetime.now() - datetime.datetime.fromisoformat(cur_local_stock['date'])).days
+    days = period if period else 1
+    x = user['wealth_ratio']
+    d = days / 365
+    coff = d*x
+    f = (coff*1.003*p + 0.87261*p)/0.86739
     return True if ev > f else False
 
 
