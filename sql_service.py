@@ -15,6 +15,16 @@ def connect_db():
     return con
 
 
+def get_token():
+    con = connect_db()
+    cursor = con.cursor()
+    query = f"select token from buyer where buyer.name like 'kairick'"
+    cursor.execute(query)
+    result = cursor.fetchone()
+    con.commit()
+    con.close()
+    return result[0]
+
 def init_tables():
     con = connect_db()
     cursor = con.cursor()
