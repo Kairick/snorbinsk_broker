@@ -1,7 +1,7 @@
 import datetime
 import json
 import csv
-
+from finam import Exporter, Market, Timeframe
 
 
 import requests
@@ -24,14 +24,23 @@ def get_filtered_stocks(raw_data):
     return data
 
 
-def get_stock_history(name):
-    url = f"https://export.finam.ru?market=1&em=3&&code={name}&apply=0&df=1&mf=1&yf=2019&from=01.02.2019&dt=3&mt=1&yt=2020&to=03.02.2020&p=4&f={name}_190201_200203&e=.csv&cn={name}&dtf=1&tmf=1&MSOR=1&mstime=on&mstimever=1&sep=3&sep2=1&datf=12&at=1"
-    response = requests.get(url)
-    with open('demo.csv', 'w', newline='', encoding='utf8') as f:
-        writer = csv.writer(f)
-        for row in response.content:
-            writer.writerow(row)
-    print(3)
+def get_stock_history(name, start_date):
+
+    exporter = Exporter()
+    try:
+        stock = exporter.lookup(code=name, market=Market.SHARES)
+        data = exporter.download(stock.index[0], market=Market.SHARES,
+                                 start_date=datetime.datetime.strptime(start_date, '%d.%m.%Y').date(),
+                                 timeframe=Timeframe.MINUTES10)
+        data = data.drop(labels=['<HIGH>', '<LOW>', '<OPEN>', '<VOL>'], axis=1)
+        headers = ['DATE', 'TIME', 'PRICE']
+        data.columns = headers
+        data.to_csv(f'dataset/{name}.csv')
+        print(f'{name} downloaded')
+    except Exception as ex:
+        print(ex)
+        print(f'{name} not found')
+
 
 def get_stocks_from_bank(token):
     raw_data = get_raw_data(token, URL)
